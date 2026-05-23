@@ -1,5 +1,7 @@
 ---
-tags: [tech, stack]
+tags:
+  - tech
+  - stack
 summary: engine, renderer, physics, world constants, art tooling
 updated: 2026-05-24
 ---
@@ -20,3 +22,7 @@ updated: 2026-05-24
 - art rejected: midjourney, dall-e — weak for pixel art
 - plugins: none yet
 - platform targets: tbd
+- agent tooling (mcp servers, configured in `.mcp.json`):
+    - obsidian — vault access via local rest api on `127.0.0.1:27123`
+    - godot — coding-solo/godot-mcp, local build at `../tools/godot-mcp/build/index.js`, drives editor and runs scenes via godot cli
+    - godot docs mcp — not configured; previous hosted variant removed, local one to be chosen later

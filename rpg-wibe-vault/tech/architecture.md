@@ -29,7 +29,7 @@ updated: 2026-05-24
 - systemrunner ticks:
     - `_physics_process` (60hz): `InputSystem.tick()`, `MovementSystem.tick()`, `CollisionSystem.tick()`
     - `_ai_timer` (4hz): `AISystem.tick()` (states, pathfinding)
-    - event subscribers: `entity_died -> LootSystem`, `item_picked_up -> InventorySystem`, `building_placed -> NavigationSystem`
+    - event subscribers: `entity_died -> LootSystem`, `item_picked_up -> InventorySystem`, `building_placed -> NavigationSystem`, `building_placed -> TopologySystem`
     - event-driven systems have no `tick` at all
 - dirty flag:
     - components with mutable state (health, inventory) carry `dirty: bool`
@@ -55,7 +55,9 @@ updated: 2026-05-24
     - entity lifecycle: `entity_created(id)`, `entity_destroyed(id)`
     - combat: `damage_dealt(attacker_id, target_id, amount)`, `entity_died(id)`
     - interaction: `action_requested(entity_id, action)`, `item_picked_up(entity_id, item_type, amount)`
-    - world: `level_loaded(level_id)`, `level_unloading()`, `building_placed(entity_id, cell)`, `building_validated(entity_id)`
+    - world: `level_loaded(level_id)`, `level_unloading()`, `building_placed(entity_id, cell)`, `building_validated(building_id)`, `building_invalidated(building_id)`
+    - chunks: `chunk_loaded(coord)`, `chunk_unloaded(coord)`
+    - interior: `interior_entered(building_id)`, `interior_exited(building_id)`
 - event system boundaries:
     - use for: state changes affecting multiple unrelated subscribers; one-shot facts; cross-layer comms (system -> presentation)
     - do not use for: data checked every frame (use a component); intra-system comms (call directly); passing big objects (pass id, the consumer reads the component)
@@ -75,13 +77,57 @@ updated: 2026-05-24
     - steam api rejected for now: needs godotsteam plugin + steamworks sdk + developer account; transport can be swapped later (`ENetMultiplayerPeer` -> `SteamMultiplayerPeer`) without touching game logic
     - host: runs full `SystemRunner` authoritatively, broadcasts snapshots
     - client: receives snapshot, applies via `GameWorld.apply_snapshot()`, runs only `InputSystem` + presentation
+- world streaming:
+    - world has no hard size limit; 1024×1024 cells is an orientation, not a cap
+    - chunked storage: `Dictionary[Vector2i -> ChunkData]`; chunk size 32 or 64 cells (tbd)
+    - chunk data: `PackedByteArray` per layer — `ground_tile`, `height`, `block_id`; `Resource` wrapper `ChunkData`
+    - global cell = `chunk_coord * CHUNK_SIZE + local_cell`; entity `Position` stores world-space `Vector3` (float)
+    - hysteresis streaming via two radii:
+        - `R_load` — enter range, start async load/generate; chunk state `loading -> active`
+        - `R_unload` (> `R_load`) — leave range, evict to disk; chunk state `active -> retained -> unloading`
+        - gap between `R_load` and `R_unload` prevents thrash on chunk-border oscillation
+    - async load via `WorkerThreadPool`; never block frame
+    - rendering: per-chunk `MultiMeshInstance3D` per tile type — single draw call per type per chunk
+    - generation: chunk has `authored: bool`; unauthored chunks are procedurally generated from seed; authored chunks are hand-built locations stored on disk
+    - locations: named `Rect2i` ranges in chunk space + metadata (biome, danger, node links); stored in `WorldMap : Resource`, separate from chunk data
+- derived topology:
+    - source-of-truth on the grid: ground tiles, heights, blocks (with components). everything else is computed.
+    - derived facts (recomputed on change, cached in `TopologyComponent` per chunk):
+        - wall neighbor bitmask (N/E/S/W) per wall block — drives which corner/edge mesh variant to render
+        - building interior polygons — flood-fill empty space inside a closed perimeter + roof; bounded region = interior
+        - building id — deterministic hash of the smallest interior cell
+        - terrain transition type per cell edge — derived from Δh and biome's `slope_allowed` rule (flat / ramp / cliff)
+    - `TopologySystem` recomputes only the affected bounding box on `building_placed`/`building_removed`/`terrain_changed`; event-driven, no tick
+    - rationale: player, npc-builder, and editor all write blocks only; "wall", "house", "interior", "ramp" are interpretations applied by one engine in one place
+    - door/window blocks carry `Passable {for}` and `Sightline {transparent}` components — flood-fill treats `Passable` as a wall (so interior stays closed), player/sight treat it as opening
+    - terrain transition rules:
+        - Δh = 0 → flat
+        - |Δh| = 1 and biome `slope_allowed` → ramp (passable)
+        - |Δh| = 1 and not allowed → step cliff (impassable)
+        - |Δh| ≥ 2 → cliff (impassable)
+        - navmesh derives from these; impassable transitions block path
+    - mesh selection: 16-variant atlas keyed by 4-bit neighbor mask — for walls (corner / T / end / mid) and for terrain (marching-squares-style corner heights)
 - occlusion:
-    - two occluder types
-    - type a (transparent): trees, bushes, small fences — go semi-transparent when blocking the player; implemented via `albedo_color.a` or material `transparency`
-    - type b (buildings, walls 2+ blocks tall): switch between normal and hidden mode; hidden = show only the bottom 1-block silhouette/foundation with dark fill inside; classic isometric rpg approach
-    - detection: raycast from camera to player; every hit object activates its occluded mode
-    - state held in `OccluderComponent` (type enum + `occluded: bool` dirty flag)
-    - `OcclusionSystem` is event-driven and updates the flag; `EntityView` reacts and swaps material
+    - three independent states an entity can be in (not exclusive):
+        - `transparent` — semi-transparent fade; used for foliage and small decor (trees, bushes, low fences)
+        - `wall_group_hidden` — entire wall group hidden when any of its blocks lies on the camera→player line; granularity = wall group, not block
+        - `interior_cutaway` — front-facing walls of the building containing the player are discarded above a cutoff height; back walls and contents stay fully visible
+    - wall group = one edge of a building's perimeter polygon (already computed by `TopologySystem`); free-standing walls form their own one-edge group
+    - detection: cell-walk (Bresenham) along the camera→player line over the grid, not physics raycast
+        - camera is fixed isometric, so the line direction is constant; only player cell movement triggers a new walk
+        - re-evaluated only on player `cell_changed` event, not per frame
+        - cost: O(line length in cells), independent of building count
+    - interior mode:
+        - entered when player cell is inside any building interior polygon (4hz check)
+        - emits `interior_entered(building_id)` / `interior_exited(building_id)`
+        - outside-world darkening via world-shader uniform `interior_mask_aabb` + `interior_blend: 0..1` (0.3s lerp); pixels outside the building's aabb multiplied by ~0.05 albedo
+        - front-wall cutaway via wall shader uniform `cutoff_height` + per-instance `is_front_wall` flag; fragments above cutoff are `discard`-ed, not alpha-blended (sharp slice)
+        - "front wall" is constant per building given the fixed camera: the two perimeter sides whose normals face the camera; computed once at validation
+    - implementation per state:
+        - `transparent` — single shader on a foliage `MultiMesh`, per-instance `alpha_override` via custom data
+        - `wall_group_hidden` — wall shader uniform `hidden_group_id` array; instances stamped with their group id `discard`/dim when in array
+        - `interior_cutaway` — same wall shader, separate uniform path; orthogonal to `wall_group_hidden`
+    - state lives in `OccluderComponent` on the entity (type + per-state dirty flags); `OcclusionSystem` is event-driven; `EntityView` reacts and updates the shader uniforms
 - open architecture questions:
     - autosave trigger — timer vs location transition
     - in coop: who saves the world (host only?)
@@ -90,7 +136,10 @@ updated: 2026-05-24
     - lag compensation strategy for combat
     - host migration when host disconnects
     - gamepad dead zone tuning
-    - occlusion implementation — two meshes vs shader uniform vs visibility layers
-    - corner partial hiding for buildings
-    - raycast performance with many buildings on screen
     - placeholder assets — stick with procedural generation or move to real sprites earlier
+    - chunk size — 32 vs 64 cells (memory vs streaming granularity)
+    - `R_load` / `R_unload` exact values, biome-dependent or global
+    - floating origin — trigger threshold and whether needed before late-game
+    - procedural generation seed and biome distribution rules
+    - wall group definition — per perimeter edge vs per straight line (perimeter edge currently chosen, may need revisit for L-shaped rooms)
+    - interior detection cost when many small buildings are loaded — may need spatial index over building polygons
