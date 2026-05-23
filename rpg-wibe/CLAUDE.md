@@ -1,0 +1,12 @@
+- that's rpg-wibe project - the game what developed on Godot engine and has knolage obsidian based knolage base
+- use `rpg-wibe-vault` as knolage base `http://127.0.0.1:27123/` staring with `index.md`
+- avoid obsidian mcp methods waht return all knolage base or too large search result
+- use knolage base lists and structure to found results first 
+- use knolage base structure to find result 
+- read knolage base before provide code updates
+- update knolage base when updating the code to keep it sync
+- working language for code, comments, and vault: `english`
+- knolage base data should be short and laconic as current file
+- knolage base rules described in `rules.md` file
+- all knolage base fiels presented as a table in `list.base` file
+- do not try to change this knolage base as a files or using file systems if mcp does not work - it mean what we need to fix mcp server first

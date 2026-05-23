@@ -1,0 +1,18 @@
+filters:
+  and:
+    - file.ext == "md"
+properties:
+  note.summary:
+    displayName: summary
+  note.tags:
+    displayName: tags
+  note.updated:
+    displayName: updated
+views:
+  - type: table
+    name: all notes
+    order:
+      - file.path
+      - summary
+      - tags
+      - updated
