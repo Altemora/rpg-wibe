@@ -1,7 +1,7 @@
 ---
 tags: [rules]
 summary: vault usage rules for ai agents
-updated: 2026-05-23
+updated: 2026-05-24
 ---
 
 - vault is single source of truth; read before code change, update after code change
@@ -31,15 +31,16 @@ updated: 2026-05-23
     - `index.md` — entry point
     - `rules.md` — this file
     - `list.base` — full vault file table (obsidian base)
-    - `game/concept.md` — idea, pillars, target
+    - `game/concept.md` — pitch, pillars, world, character, resources, coop, aesthetic
     - `game/decisions.md` — design decisions log
     - `game/mechanics.md` — flat map of mechanics
     - `game/mechanics/<name>.md` — detail file for a complex mechanic
     - `code/files.md` — flat map of all code files (path — role)
     - `code/classes.md` — flat map of classes (name — role, methods as sub-bullets)
     - `code/scenes.md` — flat map of scenes (name — role)
-    - `tech/stack.md` — engine, libs, plugins, targets
+    - `tech/stack.md` — engine, renderer, world constants, art tooling
     - `tech/conventions.md` — naming, patterns, layout
+    - `tech/architecture.md` — code architecture patterns and cross-cutting technical decisions
     - `issues/` — post-mortems for resolved bugs; file naming and aggregation format are tbd, defined when the first bug is recorded
 - update triggers:
     - new script -> add bullet to `code/files.md` and, if class declared, to `code/classes.md`
@@ -49,7 +50,10 @@ updated: 2026-05-23
     - file or class removed -> delete the bullet
     - new mechanic -> add bullet to `game/mechanics.md`; create detail file only if complex
     - mechanic changed -> patch the bullet, or patch the detail file if one exists
-    - tech decision -> append to `tech/stack.md` or `tech/conventions.md`
+    - tech decision -> append to `tech/stack.md`, `tech/conventions.md`, or `tech/architecture.md` depending on scope
+    - architectural pattern change -> patch `tech/architecture.md`
+    - new open question -> add to the `open architecture questions` section of `tech/architecture.md`
+    - design decision -> append row to `game/decisions.md`
     - resolved bug -> tbd until the issues format is defined
 - file template (copy frontmatter, fill body as bullets):
 

@@ -1,13 +1,22 @@
 ---
 tags: [tech, stack]
-summary: engine, renderer, physics, plugins, build targets
-updated: 2026-05-23
+summary: engine, renderer, physics, world constants, art tooling
+updated: 2026-05-24
 ---
 
 - engine: godot 4.6
 - renderer: mobile
 - physics 3d: jolt
-- windows driver: d3d12
+- windows graphics driver: d3d12
 - language: gdscript (default)
+- rendering approach: 3d scene + sprite3d billboards + pixel art textures
+- camera: isometric, fixed, -45° pitch + 45° yaw
+- world constants:
+    - grid cell: 1×1×1 godot unit (1 unit ≈ 1m)
+    - floor height: 1 unit
+    - character size: ~0.8w × 1.8h units (≈ 2 cells tall)
+    - tile texture: 32×32 px
+- art tooling: aseprite for hand-drawn pixel art, pixellab.ai for ai-assisted pixel generation
+- art rejected: midjourney, dall-e — weak for pixel art
 - plugins: none yet
 - platform targets: tbd

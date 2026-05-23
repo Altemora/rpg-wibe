@@ -1,0 +1,96 @@
+---
+tags: [tech, architecture]
+summary: code architecture patterns and cross-cutting technical decisions
+updated: 2026-05-24
+---
+
+- three-layer pattern:
+    - world state (data) ↔ systems (logic) -> presentation (nodes)
+    - lower layer does not know about upper
+    - data does not know about systems; systems do not know about nodes
+- autoload order:
+    - `GameEvents` — signals only, zero dependencies; loads first
+    - `GameWorld` — data; uses `GameEvents`
+    - `SystemRunner` — runs systems; depends on `GameWorld`
+    - circular deps between autoloads hang the engine at start; `GameEvents` avoids them by importing nothing
+- tick frequencies:
+    - input, movement, collision systems — 60hz in `_physics_process`
+    - ai system — 4hz throttled (does not need per-frame)
+    - ui and dirty-flag systems — event-driven (only on change)
+- ecs components:
+    - components are `Resource` subclasses, not `Dictionary`
+    - rationale: typed fields give 28–59% perf gain over dict access; jit gdscript optimizes typed access better
+    - convention: factory class `C` with static helpers like `C.position(x, y, z)` for terse creation
+- gameworld storage:
+    - `_entities: Dictionary` — id (int) -> dictionary of components; o(1) lookup
+    - `_groups: Dictionary` — group name (StringName) -> `Array[int]`; typed array, no allocations in tick
+    - groups updated only on `add_component` / `destroy_entity`, never per frame
+    - critical: on level load must call `clear_level_entities()`; the autoload survives scene changes, otherwise the world leaks entities
+- systemrunner ticks:
+    - `_physics_process` (60hz): `InputSystem.tick()`, `MovementSystem.tick()`, `CollisionSystem.tick()`
+    - `_ai_timer` (4hz): `AISystem.tick()` (states, pathfinding)
+    - event subscribers: `entity_died -> LootSystem`, `item_picked_up -> InventorySystem`, `building_placed -> NavigationSystem`
+    - event-driven systems have no `tick` at all
+- dirty flag:
+    - components with mutable state (health, inventory) carry `dirty: bool`
+    - system sets `dirty = true` on change; ui and render systems skip entities where `dirty == false`
+- ecs decisions confirmed against official sources:
+    - `GameWorld` as autoload — godot best practices
+    - `Resource` over `Dictionary` — data preferences guide
+    - typed array for groups — gdscript perf guide
+    - eventbus via signals — gdquest + official docs
+    - varying tick rates — engine internals
+    - systems without own state — gdscript reference (no static vars)
+    - dirty flags — used by the engine itself
+- ecs alternatives rejected:
+    - oop with logic in nodes — hard to serialize for multiplayer
+    - godex or external ecs — needs c++, overkill for a gdscript project
+    - dictionary components — slower iteration, no type safety
+    - systems as autoload — needless if they hold no state
+- event system distinction rule:
+    - what is *now* (state) -> component
+    - what *happened* (fact) -> `GameEvents` signal
+    - example: player health is a component; player death is an event
+- gameevents signal catalog:
+    - entity lifecycle: `entity_created(id)`, `entity_destroyed(id)`
+    - combat: `damage_dealt(attacker_id, target_id, amount)`, `entity_died(id)`
+    - interaction: `action_requested(entity_id, action)`, `item_picked_up(entity_id, item_type, amount)`
+    - world: `level_loaded(level_id)`, `level_unloading()`, `building_placed(entity_id, cell)`, `building_validated(entity_id)`
+- event system boundaries:
+    - use for: state changes affecting multiple unrelated subscribers; one-shot facts; cross-layer comms (system -> presentation)
+    - do not use for: data checked every frame (use a component); intra-system comms (call directly); passing big objects (pass id, the consumer reads the component)
+- input system:
+    - flow: godot `InputMap` -> `InputSystem.tick()` -> `input_intent` component -> consumer systems
+    - systems never call `Input.is_action_pressed()` directly; they only read the component
+    - continuous state (`move_x`, `move_z`) lives in the component; one-shot actions (attack, interact) go via `GameEvents.action_requested`
+    - remapping uses built-in `InputMap`; keybinds persisted in `ConfigFile`
+- save system:
+    - scope: full state — player + world (resources, buildings, npcs, loot)
+    - format: `GameWorld.serialize()` -> `Dictionary` -> json
+    - file split: `world_state.json` (static-ish) + `player_state.json` (frequent changes)
+    - split rationale: enables a future flow where a player joins a foreign world with their own character
+    - death rule: inventory preserved on death; respawn at start; rule may change later but does not affect architecture
+- multiplayer:
+    - transport: godot built-in enet, listen server model — one player hosts, others connect; no dedicated server
+    - steam api rejected for now: needs godotsteam plugin + steamworks sdk + developer account; transport can be swapped later (`ENetMultiplayerPeer` -> `SteamMultiplayerPeer`) without touching game logic
+    - host: runs full `SystemRunner` authoritatively, broadcasts snapshots
+    - client: receives snapshot, applies via `GameWorld.apply_snapshot()`, runs only `InputSystem` + presentation
+- occlusion:
+    - two occluder types
+    - type a (transparent): trees, bushes, small fences — go semi-transparent when blocking the player; implemented via `albedo_color.a` or material `transparency`
+    - type b (buildings, walls 2+ blocks tall): switch between normal and hidden mode; hidden = show only the bottom 1-block silhouette/foundation with dark fill inside; classic isometric rpg approach
+    - detection: raycast from camera to player; every hit object activates its occluded mode
+    - state held in `OccluderComponent` (type enum + `occluded: bool` dirty flag)
+    - `OcclusionSystem` is event-driven and updates the flag; `EntityView` reacts and swaps material
+- open architecture questions:
+    - autosave trigger — timer vs location transition
+    - in coop: who saves the world (host only?)
+    - save format versioning when component schema changes
+    - multiplayer snapshot frequency — full vs delta
+    - lag compensation strategy for combat
+    - host migration when host disconnects
+    - gamepad dead zone tuning
+    - occlusion implementation — two meshes vs shader uniform vs visibility layers
+    - corner partial hiding for buildings
+    - raycast performance with many buildings on screen
+    - placeholder assets — stick with procedural generation or move to real sprites earlier
