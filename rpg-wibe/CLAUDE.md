@@ -10,3 +10,8 @@
 - knolage base rules described in `rules.md` file
 - all knolage base fiels presented as a table in `list.base` file
 - do not try to change this knolage base as a files or using file systems if mcp does not work - it mean what we need to fix mcp server first
+- at session start verify required mcp servers are connected: `obsidian`, `godot`, `godot-docs` (project `.mcp.json`); if any tool prefix is missing, warn the user up front and name what is not running before doing other work
+- expected tool prefixes: `mcp__obsidian__*` (vault), `mcp__godot__*` (engine control), `mcp__godot-docs__*` (api docs)
+- if `mcp__obsidian__*` is missing — obsidian app or its local rest api plugin is not running
+- if `mcp__godot__*` is missing — node entry at `../tools/godot-mcp/build/index.js` failed (rebuild) or `GODOT_PATH` invalid
+- if `mcp__godot-docs__*` is missing — docker is not running or `godot-mcp-docs:local` image is missing (rebuild from `../tools/godot-mcp-docs/`)

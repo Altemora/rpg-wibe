@@ -13,12 +13,12 @@
             "state": {
               "type": "markdown",
               "state": {
-                "file": "game/decisions.md",
+                "file": "tech/architecture.md",
                 "mode": "source",
                 "source": false
               },
               "icon": "lucide-file",
-              "title": "decisions"
+              "title": "architecture"
             }
           }
         ]
@@ -185,11 +185,11 @@
   },
   "active": "801b4f9c43097dcb",
   "lastOpenFiles": [
-    "game/mechanics.md",
-    "tech/architecture.md",
-    "tech/conventions.md",
     "tech/stack.md",
+    "tech/conventions.md",
+    "tech/architecture.md",
     "game/decisions.md",
+    "game/mechanics.md",
     "game/concept.md",
     "code/scenes.md",
     "code/files.md",
