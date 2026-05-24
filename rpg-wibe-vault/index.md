@@ -1,5 +1,6 @@
 ---
-tags: [index]
+tags:
+  - index
 summary: entry point for rpg-wibe vault
 updated: 2026-05-24
 ---
@@ -9,3 +10,4 @@ updated: 2026-05-24
 - game design: [[game/concept]], [[game/decisions]], [[game/mechanics]]
 - code map: [[code/files]], [[code/classes]], [[code/scenes]]
 - tech: [[tech/stack]], [[tech/conventions]], [[tech/architecture]]
+- roadmap of work past the prototype: [[roadmap]]

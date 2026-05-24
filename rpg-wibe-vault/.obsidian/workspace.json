@@ -13,12 +13,12 @@
             "state": {
               "type": "markdown",
               "state": {
-                "file": "tech/architecture.md",
-                "mode": "source",
+                "file": "code/classes.md",
+                "mode": "preview",
                 "source": false
               },
               "icon": "lucide-file",
-              "title": "architecture"
+              "title": "classes"
             }
           }
         ]
@@ -94,7 +94,7 @@
             "state": {
               "type": "backlink",
               "state": {
-                "file": "ruels.md",
+                "file": "tech/architecture.md",
                 "collapseAll": false,
                 "extraContext": false,
                 "sortOrder": "alphabetical",
@@ -104,7 +104,7 @@
                 "unlinkedCollapsed": true
               },
               "icon": "links-coming-in",
-              "title": "Backlinks for ruels"
+              "title": "Backlinks for architecture"
             }
           },
           {
@@ -185,19 +185,27 @@
   },
   "active": "801b4f9c43097dcb",
   "lastOpenFiles": [
+    "roadmap.md",
+    "code/classes/player.md",
+    "code/classes/iso_camera.md",
+    "code/scenes/test_world.md",
+    "code/scenes.md",
+    "code/classes.md",
+    "code/files.md",
+    "code/scenes",
+    "code/classes",
+    "game/mechanics.md",
+    "game/decisions.md",
+    "game/concept.md",
+    "game/mechanics/character-rendering.md",
+    "rules.md",
+    "list.base",
+    "index.md",
     "tech/stack.md",
     "tech/conventions.md",
     "tech/architecture.md",
-    "game/decisions.md",
-    "game/mechanics.md",
-    "game/concept.md",
-    "code/scenes.md",
-    "code/files.md",
-    "code/classes.md",
-    "rules.md",
+    "game/mechanics",
     "temp.md",
-    "list.base",
-    "index.md",
     "wrong-legacy/Technical/Technical MOC.md",
     "wrong-legacy/Technical/Technical Decisions.md",
     "wrong-legacy/Technical/Occlusion System.md",
@@ -207,20 +215,12 @@
     "wrong-legacy/Plan/Development Plan.md",
     "wrong-legacy/Plan/1.0 First Gameplay.md",
     "wrong-legacy/Plan/0.3 Placeholder Assets.md",
-    "wrong-legacy/Plan/0.2 Level Editor.md",
-    "wrong-legacy/Design/NPC System.md",
-    "wrong-legacy/Design/Game Vision.md",
-    "wrong-legacy/Design/Design MOC.md",
-    "wrong-legacy/Architecture/Save System.md",
     "wrong-legacy/Untitled.base",
     "wrong-legacy/Untitled 3.base",
     "wrong-legacy/Untitled 2.base",
     "wrong-legacy/Untitled 1.base",
     "wrong-legacy/Technical",
     "wrong-legacy/Systems",
-    "wrong-legacy/Process",
-    "wrong-legacy/Plan",
-    "wrong-legacy/Design",
     "Untitled.canvas"
   ]
 }

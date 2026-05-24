@@ -16,3 +16,4 @@ updated: 2026-05-24
     - terrain-heights — ground cells carry integer height; transition between neighbours (flat / ramp / cliff) is derived from Δh plus biome's `slope_allowed` rule, not stored
     - wall-topology — wall corners, T-junctions and ends are derived from a 4-bit neighbor mask, not stored; doors and windows are blocks with `Passable` and `Sightline` components, so flood-fill still treats them as walls for interior detection
     - interior-mode — when player enters a building, surrounding world dims to near-black via shader uniform and front-facing walls are `discard`-cut at a low cutoff height (sharp slice, not transparency); back walls and interior stay fully visible
+    - [[game/mechanics/character-rendering|character-rendering]] — single body sprite per frame, palette-indexed shader for body-conformant equipment, anchor-attached overlay sprites for shape-changing equipment

@@ -1,12 +1,14 @@
 ---
 tags: [code, class]
-summary: flat map of all classes in rpg-wibe (name — role, methods as sub-bullets)
-updated: 2026-05-23
+summary: index of classes; detail per class lives in `code/classes/<name>.md`
+updated: 2026-05-24
 ---
 
-- one bullet per class declared with `class_name`; format: `ClassName — what it is, what it does`
-- non-trivial methods listed as sub-bullets: `method_name(args) — what it does`
-- skip obvious getters, setters, and `_ready`/`_process` unless they hold real logic
-- order by name; cross-link to mechanics with `[[game/mechanics/<name>]]` when relevant
+- one bullet per class declared with `class_name`; format: `[[code/classes/<name>|ClassName]] — one-line role`
+- detail file holds extends, declared-in path, methods, related mechanics, status (prototype / production), notes
+- add/remove the bullet in the same change that adds/removes the class file
+- order by name
+
 - entries:
-    - none yet
+    - [[code/classes/iso_camera|IsoCamera]] — throwaway prototype orthographic camera; fixed iso angle, lerp-follows a node
+    - [[code/classes/player|Player]] — throwaway prototype `CharacterBody3D` controller for the walk test

@@ -37,3 +37,7 @@ updated: 2026-05-24
         - entry: `docker run --rm -i godot-mcp-docs:local`
         - requires docker desktop running
         - chosen as most popular docs mcp (65★); previous tkmct attempt failed to attach in claude desktop
+    - pixellab — pixellab.ai mcp for pixel-art generation and rotation
+        - http endpoint `https://api.pixellab.ai/mcp`, bearer token in `.mcp.json`
+        - tier 1 plan: 2000 images/month, 320×320 max, `rotate artwork` and skeleton animation features
+        - used to generate body sheets and overlay items per [[game/mechanics/character-rendering]]
